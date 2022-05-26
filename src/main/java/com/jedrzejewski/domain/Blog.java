@@ -2,6 +2,7 @@ package com.jedrzejewski.domain;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /*
 I am using Lombok @Annotations to reduce boilerplate code and focus on application features.
@@ -18,6 +19,6 @@ and constructor with required arguments
 public class Blog {
 
     Integer id;
-    String text;
-    Integer userid;
+    @NonNull String text;
+    @NonNull Integer userid;
 }

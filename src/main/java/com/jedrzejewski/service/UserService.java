@@ -11,10 +11,6 @@ public class UserService {
         return repository.create(newUser);
     }
 
-    public String getPasswordByUsername(String username){
-        return repository.getPasswordByUsername(username);
-    }
-
     public User login(String user, String password) {
         //TODO: implement login logic
         String passwordByUsername = repository.getPasswordByUsername(user);

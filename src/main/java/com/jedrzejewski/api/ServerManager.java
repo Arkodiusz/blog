@@ -1,5 +1,7 @@
 package com.jedrzejewski.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jedrzejewski.domain.Blog;
 import com.jedrzejewski.domain.User;
 import com.jedrzejewski.service.BlogService;
@@ -14,9 +16,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static java.net.URLDecoder.decode;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 public class ServerManager {
 
@@ -144,6 +144,11 @@ public class ServerManager {
     }
 
     private String convertToJson(Object response) {
-        return response.toString(); //TODO: converting to JSON
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return  mapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
