@@ -3,11 +3,12 @@ package com.jedrzejewski.repository;
 import com.jedrzejewski.domain.Blog;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MySqlBlogRepository implements BlogRepository {
 
     @Override
-    public List<Blog> getAll() {
+    public List<Optional<Blog>> getAll() {
         return null;
     }
 
