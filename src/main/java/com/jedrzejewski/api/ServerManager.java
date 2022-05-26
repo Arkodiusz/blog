@@ -28,6 +28,16 @@ public class ServerManager {
     private static final String ACTION_DELETE_ENTRY = "delete";
     private static final String ACTION_NONE = "";
 
+    public static final String P_ACTION = "action";
+    public static final String P_USERNAME = "username";
+    public static final String P_PASSWORD = "password";
+    public static final String P_PERMISSION = "permission";
+    public static final String P_READ_ONLY = "readonly";
+    public static final String P_USER = "user";
+    public static final String P_TEXT = "text";
+    public static final String P_ID = "id";
+
+
     private final HttpServer httpServer;
     private final UserService userService = new UserService();
     private final BlogService blogService = new BlogService();
@@ -37,19 +47,22 @@ public class ServerManager {
     }
 
     public void createContextForBlog() {
+        // Creating actual HttpContext , setting default executor and staring thread.
+        // Default executor uses the thread which was created by the start() method
         httpServer.createContext(PATH_FOT_BLOG, (this::handleBlogRequest));
         httpServer.setExecutor(null);
         httpServer.start();
     }
 
     private void handleBlogRequest(HttpExchange exchange) throws IOException {
+        //Handling response and finalizing exchange (request)
         Object response = distinguishRequest(exchange);
-        String responseJson = convertToJson(response);
-        if (METHOD_NOT_ALLOWED.equals(responseJson)) {
+        if (METHOD_NOT_ALLOWED.equals(response)) {
             exchange.sendResponseHeaders(405, -1);
             exchange.close();
             return;
         }
+        String responseJson = convertToJson(response);
         exchange.sendResponseHeaders(200, responseJson.getBytes().length);
         OutputStream output = exchange.getResponseBody();
         output.write(responseJson.getBytes());
@@ -58,44 +71,38 @@ public class ServerManager {
     }
 
     private Object distinguishRequest(HttpExchange exchange) {
+        //Selection of demanded operation. Decision is made based on request method and request parameters
         String requestMethod = exchange.getRequestMethod();
+        Map<String, String> params = getParametersFromQuery(exchange);
 
-        Map<String, List<String>> params = splitQuery(exchange.getRequestURI().getRawQuery());
-        String action = params.getOrDefault("action", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
+        String action = params.get(P_ACTION);
 
         if ("GET".equals(requestMethod)) {
             return blogService.fetchAllEntries();
         }
         if ("POST".equals(requestMethod) && ACTION_LOGIN.equals(action)) {
-            String user = params.getOrDefault("user", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
-            String password = params.getOrDefault("password", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
-            return userService.login(user, password);
+            return userService.login(params.get(P_USER), params.get(P_PASSWORD));
         }
         if ("POST".equals(requestMethod) && ACTION_NEW_ENTRY.equals(action)) {
-            String text = params.getOrDefault("text", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
             return blogService.createEntry(
                     Blog.builder()
-                            .text(text)
+                            .text(params.get(P_TEXT))
                             .userid(1) //TODO: implement user id assigning logic
                             .build()
             );
         }
         if ("POST".equals(requestMethod) && ACTION_NEW_USER.equals(action)) {
-            String username = params.getOrDefault("username", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
-            String password = params.getOrDefault("password", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
-            String permission = params.getOrDefault("permission", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
-            String readonly = params.getOrDefault("readonly", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
             return userService.createUser(
                     User.builder()
-                            .username(username)
-                            .password(password)
-                            .permission(permission)
-                            .readonly(readonly)
+                            .username(params.get(P_USERNAME))
+                            .password(params.get(P_PASSWORD))
+                            .permission(params.get(P_PERMISSION))
+                            .readonly(params.get(P_READ_ONLY))
                             .build()
             );
         }
         if ("DELETE".equals(requestMethod) && ACTION_DELETE_ENTRY.equals(action)) {
-            String idAsString = params.getOrDefault("id", List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
+            String idAsString = params.get(P_ID);
             int id;
             try {
                 id = Integer.parseInt(idAsString);
@@ -106,7 +113,23 @@ public class ServerManager {
             return "";
         }
         return METHOD_NOT_ALLOWED;
+    }
 
+    private Map<String, String> getParametersFromQuery(HttpExchange exchange) {
+        Map<String, List<String>> splittedQuery = splitQuery(exchange.getRequestURI().getRawQuery());
+        Map<String, String> params = new HashMap<>();
+        params.put(P_ACTION, getValueFromSplittedQuery(splittedQuery, P_ACTION));
+        params.put(P_USERNAME, getValueFromSplittedQuery(splittedQuery, P_USERNAME));
+        params.put(P_PASSWORD, getValueFromSplittedQuery(splittedQuery, P_PASSWORD));
+        params.put(P_PERMISSION, getValueFromSplittedQuery(splittedQuery, P_PERMISSION));
+        params.put(P_READ_ONLY, getValueFromSplittedQuery(splittedQuery, P_READ_ONLY));
+        params.put(P_USER, getValueFromSplittedQuery(splittedQuery, P_USER));
+        params.put(P_TEXT, getValueFromSplittedQuery(splittedQuery, P_TEXT));
+        return params;
+    }
+
+    private String getValueFromSplittedQuery(Map<String, List<String>> splittedQuery, String parameter) {
+        return splittedQuery.getOrDefault(parameter, List.of(ACTION_NONE)).stream().findFirst().orElse(ACTION_NONE);
     }
 
     private Map<String, List<String>> splitQuery(String query) {
