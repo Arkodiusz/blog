@@ -21,7 +21,6 @@ import static java.util.stream.Collectors.*;
 public class ServerManager {
 
     private static final String PATH_FOT_BLOG = "/blog";
-    private static final String METHOD_NOT_ALLOWED = "error";
     private static final String ACTION_LOGIN = "login";
     private static final String ACTION_NEW_ENTRY = "new";
     private static final String ACTION_NEW_USER = "new_user";
@@ -56,21 +55,21 @@ public class ServerManager {
 
     private void handleBlogRequest(HttpExchange exchange) throws IOException {
         //Handling response and finalizing exchange (request)
-        Object response = distinguishRequest(exchange);
-        if (METHOD_NOT_ALLOWED.equals(response)) {
+        Response response = distinguishRequest(exchange);
+        if (405 == response.getStatus()) {
             exchange.sendResponseHeaders(405, -1);
             exchange.close();
             return;
         }
-        String responseJson = convertToJson(response);
-        exchange.sendResponseHeaders(200, responseJson.getBytes().length);
+        String responseJson = convertToJson(response.getBody());
+        exchange.sendResponseHeaders(response.getStatus(), responseJson.getBytes().length);
         OutputStream output = exchange.getResponseBody();
         output.write(responseJson.getBytes());
         output.flush();
         exchange.close();
     }
 
-    private Object distinguishRequest(HttpExchange exchange) {
+    private Response distinguishRequest(HttpExchange exchange) {
         //Selection of demanded operation. Decision is made based on request method and request parameters
         String requestMethod = exchange.getRequestMethod();
         Map<String, String> params = getParametersFromQuery(exchange);
@@ -78,28 +77,28 @@ public class ServerManager {
         String action = params.get(P_ACTION);
 
         if ("GET".equals(requestMethod)) {
-            return blogService.fetchAllEntries();
+            return new Response(200, blogService.fetchAllEntries());
         }
         if ("POST".equals(requestMethod) && ACTION_LOGIN.equals(action)) {
-            return userService.login(params.get(P_USER), params.get(P_PASSWORD));
+            return new Response(200, userService.login(params.get(P_USER), params.get(P_PASSWORD)));
         }
         if ("POST".equals(requestMethod) && ACTION_NEW_ENTRY.equals(action)) {
-            return blogService.createEntry(
+            return new Response(201, blogService.createEntry(
                     Blog.builder()
                             .text(params.get(P_TEXT))
                             .userid(1) //TODO: implement user id assigning logic
                             .build()
-            );
+            ));
         }
         if ("POST".equals(requestMethod) && ACTION_NEW_USER.equals(action)) {
-            return userService.createUser(
+            return new Response(201, userService.createUser(
                     User.builder()
                             .username(params.get(P_USERNAME))
                             .password(params.get(P_PASSWORD))
                             .permission(params.get(P_PERMISSION))
                             .readonly(params.get(P_READ_ONLY))
                             .build()
-            );
+            ));
         }
         if ("DELETE".equals(requestMethod) && ACTION_DELETE_ENTRY.equals(action)) {
             String idAsString = params.get(P_ID);
@@ -107,12 +106,12 @@ public class ServerManager {
             try {
                 id = Integer.parseInt(idAsString);
                 blogService.deleteEntryById(id);
+                return new Response(204, "");
             } catch (NumberFormatException e) {
-                return METHOD_NOT_ALLOWED;
+                return new Response(405, "");
             }
-            return "";
         }
-        return METHOD_NOT_ALLOWED;
+        return new Response(405, "");
     }
 
     private Map<String, String> getParametersFromQuery(HttpExchange exchange) {

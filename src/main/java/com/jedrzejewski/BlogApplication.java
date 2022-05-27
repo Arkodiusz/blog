@@ -6,13 +6,17 @@ import com.jedrzejewski.db.H2DatabaseDriver;
 
 import java.io.IOException;
 
-class BlogApplication {
+public class BlogApplication {
 
     private static final int SERVER_PORT = 8080;
 
+    public static H2DatabaseDriver h2DbDriver = new H2DatabaseDriver();
+
     public static void main(String[] args) {
 
-        createDB();
+
+        createDB(h2DbDriver);
+        createDummyData();
 
         //  Trying to create server on given port. In case of exception application stops.
         ServerManager serverManager;
@@ -26,10 +30,7 @@ class BlogApplication {
         serverManager.createContextForBlog();
     }
 
-    private static void createDB() {
-
-        H2DatabaseDriver h2DbDriver = new H2DatabaseDriver();
-
+    private static void createDB(H2DatabaseDriver h2DbDriver) {
         h2DbDriver.dropAll();
 
         h2DbDriver.executeStatement(
@@ -49,7 +50,9 @@ class BlogApplication {
                         "`userid` INT NOT NULL\n" +
                         ")"
         );
+    }
 
+    private static void createDummyData() {
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 1', 1)");
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 2', 1)");
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 3', 1)");
