@@ -6,19 +6,27 @@ import com.jedrzejewski.db.H2DatabaseDriver;
 
 import java.io.IOException;
 
+/**
+ * Main class
+ */
 public class BlogApplication {
 
     private static final int SERVER_PORT = 8080;
+    public static final String DB_URL = "jdbc:h2:~/test";
+    public static final String USER = "sa";
+    public static final String PASS = "";
 
-    public static H2DatabaseDriver h2DbDriver = new H2DatabaseDriver();
+    public static H2DatabaseDriver h2DbDriver = new H2DatabaseDriver(DB_URL, USER, PASS);
 
+    /**
+     * In main method there is logic necessary to start application.
+     * Database is created, server is stared and context for http request is created.
+     * After this set of instructions app is listening for http requests.
+     */
     public static void main(String[] args) {
-
-
-        createDB(h2DbDriver);
+        createDB();
         createDummyData();
 
-        //  Trying to create server on given port. In case of exception application stops.
         ServerManager serverManager;
         try {
             serverManager = new ServerManager(SERVER_PORT);
@@ -26,11 +34,13 @@ public class BlogApplication {
             e.printStackTrace();
             return;
         }
-        //  Creating HttpContext for "/blog" path. Application will now listen for requests.
         serverManager.createContextForBlog();
     }
 
-    private static void createDB(H2DatabaseDriver h2DbDriver) {
+    /**
+     * Method creates tables in database. For this project its called at every application start.
+     */
+    private static void createDB() {
         h2DbDriver.dropAll();
 
         h2DbDriver.executeStatement(
@@ -52,6 +62,10 @@ public class BlogApplication {
         );
     }
 
+
+    /**
+     * Creates dummy data to allow manual testing
+     */
     private static void createDummyData() {
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 1', 1)");
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 2', 1)");

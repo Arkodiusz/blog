@@ -11,17 +11,31 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * H2 database driver.
+ *
+ * I decided to use H2 to make this app standalone and ready to testing after running locally without any db setup.
+ */
 public class H2DatabaseDriver {
 
+    private final String databaseUrl;
+    private final String user;
+    private final String pass;
     private static final Logger LOGGER = LogManager.getLogger(H2DatabaseDriver.class);
-    // JDBC driver name and database URL
-    static final String JDBC_DRIVER = "org.h2.Driver";
-    static final String DB_URL = "jdbc:h2:~/test";
 
-    //  Database credentials
-    static final String USER = "sa";
-    static final String PASS = "";
+    public H2DatabaseDriver(String databaseUrl, String user, String pass) {
+        this.databaseUrl = databaseUrl;
+        this.user = user;
+        this.pass = pass;
+    }
 
+    /**
+     * Processing SQL statement. Method selects adequate operation to perform on db, opens and closes connection.
+     *
+     * @param statement         SQL statement ro run
+     * @return                  resulting object is preprocessed db response
+     */
     public Object executeStatement(String statement) {
 
         Connection conn = null;
@@ -58,11 +72,9 @@ public class H2DatabaseDriver {
             }
             stmt.close();
             conn.close();
-        } catch(SQLException se) {
-            //Handle errors for JDBC
+        } catch(SQLException se) { //errors for JDBC
             se.printStackTrace();
-        } catch(Exception e) {
-            //Handle errors for Class.forName
+        } catch(Exception e) { //errors for Class.forName
             e.printStackTrace();
         } finally {
             try{
@@ -80,28 +92,64 @@ public class H2DatabaseDriver {
         return result;
     }
 
+    /**
+     * Processing SQL CREATE statement
+     *
+     * @param stmt              this object executing a static SQL statement and returning the results it produces
+     * @param sql               SQL statement
+     * @return                  resulting object is raw db response
+     */
     private Object executeCreateStatement(Statement stmt, String sql) throws SQLException {
         return stmt.executeUpdate(sql);
     }
+
+    /**
+     * Processing SQL INSERT statement
+     *
+     * @param stmt              this object executing a static SQL statement and returning the results it produces
+     * @param sql               SQL statement
+     * @return                  resulting object is raw db response
+     */
     private Object executeInsertStatement(Statement stmt, String sql) throws SQLException {
         return stmt.execute(sql);
     }
+
+    /**
+     * Processing SQL SELECT statement
+     *
+     * @param stmt              this object executing a static SQL statement and returning the results it produces
+     * @param sql               SQL statement
+     * @return                  resulting object is raw db response
+     */
     private Object executeSelectStatement(Statement stmt, String sql) throws SQLException {
         return stmt.executeQuery(sql);
     }
+
+    /**
+     * Processing SQL DELETE statement
+     *
+     * @param stmt              this object executing a static SQL statement and returning the results it produces
+     * @param sql               SQL statement
+     * @return                  resulting object is raw db response
+     */
     private Object executeDeleteStatement(Statement stmt, String sql) throws SQLException {
         return stmt.executeUpdate(sql);
     }
 
-    private Connection connect() throws ClassNotFoundException, SQLException {
-        // STEP 1: Register JDBC driver
-        Class.forName(JDBC_DRIVER);
-
-        //STEP 2: Open a connection
+    /**
+     * Connecting to database
+     *
+     * @return                  resulting object is raw db response
+     * @throws SQLException     in case of error during creating connection
+     */
+    private Connection connect() throws SQLException {
         LOGGER.info("Connecting to database...");
-        return DriverManager.getConnection(DB_URL,USER,PASS);
+        return DriverManager.getConnection(databaseUrl, user, pass);
     }
 
+    /**
+     * Dropping all database
+     */
     public void dropAll() {
         Connection conn = null;
         Statement stmt = null;
@@ -111,11 +159,9 @@ public class H2DatabaseDriver {
             stmt.executeUpdate("DROP ALL OBJECTS");
             stmt.close();
             conn.close();
-        } catch(SQLException se) {
-            //Handle errors for JDBC
+        } catch(SQLException se) { //errors for JDBC
             se.printStackTrace();
-        } catch(Exception e) {
-            //Handle errors for Class.forName
+        } catch(Exception e) { //errors for Class.forName
             e.printStackTrace();
         } finally {
             try{

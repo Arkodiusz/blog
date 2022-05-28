@@ -9,8 +9,18 @@ import java.util.List;
 
 import static com.jedrzejewski.BlogApplication.h2DbDriver;
 
+
+/**
+ * Implementation of interface for communication with 'blog' table in H2 database
+ */
 public class H2dbBlogRepository implements BlogRepository {
 
+    /**
+     * Calling db driver to make SQL query in order to get all entris form 'blog' table
+     * and processing query result.
+     *
+     * @return              list of found elements
+     */
     @Override
     public List<Blog> getAll() {
         String sql = "SELECT * FROM `blog`";
@@ -30,6 +40,12 @@ public class H2dbBlogRepository implements BlogRepository {
         return result;
     }
 
+    /**
+     * Calling db driver to make SQL query in order to create new entry in 'blog' table
+     *
+     * @param  newEntry      object to be saved
+     * @return               boolean value if saving was successful
+     */
     @Override
     public boolean create(Blog newEntry) {
         String text = newEntry.getText();
@@ -42,6 +58,11 @@ public class H2dbBlogRepository implements BlogRepository {
         return true;
     }
 
+    /**
+     * Calling db driver to make SQL query in order to delete entry with given id
+     *
+     * @param id            id of object selected for deletion
+     */
     @Override
     public void deleteById(Integer id) {
         String sql = "DELETE FROM `blog` WHERE id=" + id;

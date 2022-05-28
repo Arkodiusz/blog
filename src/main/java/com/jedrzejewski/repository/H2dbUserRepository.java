@@ -10,8 +10,18 @@ import java.util.List;
 
 import static com.jedrzejewski.BlogApplication.h2DbDriver;
 
+
+/**
+ * Implementation of interface for communication with 'user' table in H2 database
+ */
 public class H2dbUserRepository implements UserRepository {
 
+    /**
+     * Calling db driver to make SQL query in order to create new user in 'user' table
+     *
+     * @param  newUser      object to be saved
+     * @return               boolean value if saving was successful
+     */
     @Override
     public boolean create(User newUser) {
         String username = newUser.getUsername();
@@ -27,8 +37,17 @@ public class H2dbUserRepository implements UserRepository {
         return true;
     }
 
+    /**
+     * Calling db driver to make SQL query in order to
+     * validate username and password combination new entry in 'blog' table
+     *
+     * @param username          username to be tested
+     * @param password          password to be tested
+     * @return                  found user (or null if user not found)
+     */
     public User getUserByUsernameAndPassword(String username, String password) {
-        String sql = "SELECT * FROM `user` WHERE `username` = \'" +username+ "\' AND `password` = \'" + password + "\'";
+        String sql = "SELECT * FROM `user` WHERE " +
+                "`username` = \'" +username+ "\' AND `password` = \'" + password + "\'";
         Object statementResult = h2DbDriver.executeStatement(sql);
         if (!(statementResult instanceof ArrayList<?>) || (((ArrayList<?>) statementResult).size() != 1)) {
             return null;
