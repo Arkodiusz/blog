@@ -1,6 +1,5 @@
 package com.jedrzejewski.db;
 
-import com.jedrzejewski.domain.Blog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.h2.jdbc.JdbcResultSet;
@@ -47,17 +46,9 @@ public class H2DatabaseDriver {
                     break;
                 case "SELECT":
                     JdbcResultSet resultSet = (JdbcResultSet) executeSelectStatement(stmt, statement);
-
                     List<Object> list = new ArrayList<>();
-
                     while (resultSet.next()) {
-                        list.add(
-                                Blog.builder()
-                                        .id(resultSet.getInt("id"))
-                                        .text(resultSet.getString("text"))
-                                        .userid(resultSet.getInt("userid"))
-                                        .build()
-                        );
+                        list.add(resultSet.getResult().currentRow());
                     }
                     result = list;
                     break;

@@ -54,10 +54,10 @@ public class ServerManager {
     }
 
     private void handleBlogRequest(HttpExchange exchange) throws IOException {
-        //Handling response and finalizing exchange (request)
-        Response response = distinguishRequest(exchange);
-        if (405 == response.getStatus()) {
-            exchange.sendResponseHeaders(405, -1);
+        //Handling response returned by processRequest() and finalizing exchange
+        Response response = processRequest(exchange);
+        if (401 == response.getStatus() || 405 == response.getStatus()) {
+            exchange.sendResponseHeaders(response.getStatus(), -1);
             exchange.close();
             return;
         }
@@ -69,7 +69,7 @@ public class ServerManager {
         exchange.close();
     }
 
-    private Response distinguishRequest(HttpExchange exchange) {
+    private Response processRequest(HttpExchange exchange) {
         //Selection of demanded operation. Decision is made based on request method and request parameters
         String requestMethod = exchange.getRequestMethod();
         Map<String, String> params = getParametersFromQuery(exchange);
@@ -79,26 +79,32 @@ public class ServerManager {
         if ("GET".equals(requestMethod)) {
             return new Response(200, blogService.fetchAllEntries());
         }
-        if ("POST".equals(requestMethod) && ACTION_LOGIN.equals(action)) {
-            return new Response(200, userService.login(params.get(P_USER), params.get(P_PASSWORD)));
-        }
-        if ("POST".equals(requestMethod) && ACTION_NEW_ENTRY.equals(action)) {
-            return new Response(201, blogService.createEntry(
-                    Blog.builder()
-                            .text(params.get(P_TEXT))
-                            .userid(1) //TODO: implement user id assigning logic
-                            .build()
-            ));
-        }
-        if ("POST".equals(requestMethod) && ACTION_NEW_USER.equals(action)) {
-            return new Response(201, userService.createUser(
-                    User.builder()
-                            .username(params.get(P_USERNAME))
-                            .password(params.get(P_PASSWORD))
-                            .permission(params.get(P_PERMISSION))
-                            .readonly(params.get(P_READ_ONLY))
-                            .build()
-            ));
+        if ("POST".equals(requestMethod)) {
+            if (ACTION_LOGIN.equals(action)) {
+                User loginResult = userService.login(params.get(P_USER), params.get(P_PASSWORD));
+                if (loginResult == null) {
+                    return new Response(401, "");
+                }
+                return new Response(200, loginResult);
+            }
+            if (ACTION_NEW_ENTRY.equals(action)) {
+                return new Response(201, blogService.createEntry(
+                        Blog.builder()
+                                .text(params.get(P_TEXT))
+                                .userid(1) //TODO: implement user id assigning logic. ID of user could be fetched from security module.
+                                .build()
+                ));
+            }
+            if (ACTION_NEW_USER.equals(action)) {
+                return new Response(201, userService.createUser(
+                        User.builder()
+                                .username(params.get(P_USERNAME))
+                                .password(params.get(P_PASSWORD))
+                                .permission(params.get(P_PERMISSION))
+                                .readonly(params.get(P_READ_ONLY))
+                                .build()
+                ));
+            }
         }
         if ("DELETE".equals(requestMethod) && ACTION_DELETE_ENTRY.equals(action)) {
             String idAsString = params.get(P_ID);
@@ -124,6 +130,7 @@ public class ServerManager {
         params.put(P_READ_ONLY, getValueFromSplittedQuery(splittedQuery, P_READ_ONLY));
         params.put(P_USER, getValueFromSplittedQuery(splittedQuery, P_USER));
         params.put(P_TEXT, getValueFromSplittedQuery(splittedQuery, P_TEXT));
+        params.put(P_ID, getValueFromSplittedQuery(splittedQuery, P_ID));
         return params;
     }
 

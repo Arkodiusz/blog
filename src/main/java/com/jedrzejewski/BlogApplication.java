@@ -58,7 +58,8 @@ public class BlogApplication {
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 3', 1)");
         h2DbDriver.executeStatement("INSERT INTO `blog`(text, userid) VALUES ('test text 4', 1)");
 
-        h2DbDriver.executeStatement("INSERT INTO `user` VALUES (1, 'user1', 'password1', 'none', 'Yes')");
-        h2DbDriver.executeStatement("INSERT INTO `user` VALUES (2, 'user2', 'password2', 'none', 'Yes')");
+        h2DbDriver.executeStatement("INSERT INTO `user`(username, password, permission, readonly) VALUES ('admin', 'admin', 'full', 'No')");
+        h2DbDriver.executeStatement("INSERT INTO `user`(username, password, permission, readonly) VALUES ('user1', 'password1', 'none', 'Yes')");
+        h2DbDriver.executeStatement("INSERT INTO `user`(username, password, permission, readonly) VALUES ('user2', 'password2', 'none', 'Yes')");
     }
 }

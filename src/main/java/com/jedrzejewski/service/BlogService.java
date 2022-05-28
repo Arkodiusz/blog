@@ -2,21 +2,18 @@ package com.jedrzejewski.service;
 
 import com.jedrzejewski.domain.Blog;
 import com.jedrzejewski.repository.BlogRepository;
-import com.jedrzejewski.repository.MySqlBlogRepository;
+import com.jedrzejewski.repository.H2dbBlogRepository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class BlogService {
-    private final BlogRepository repository = new MySqlBlogRepository();
+    private final BlogRepository repository = new H2dbBlogRepository();
 
     public List<Blog> fetchAllEntries() {
         return repository.getAll();
     }
 
-    public Blog createEntry(Blog newEntry)  {
+    public boolean createEntry(Blog newEntry)  {
         return repository.create(newEntry);
     }
 
